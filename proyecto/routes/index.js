@@ -1,15 +1,31 @@
 var express = require('express');
+const async = require('hbs/lib/async');
 var router = express.Router();
 var {client, dbName} = require('../db/mongo');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+  mostrarDatos()
+    .then((elementos)=>{
+      console.log(elementos);
+      res.render('index', { data:elementos});
+    })
+    .catch((err)=>{
+      console.log(err);
+    });
 });
+
+async function mostrarDatos(){
+  await client.connect();
+  const db = client.db(dbName);
+  const collection = db.collection('alumnos');
+  let datos = await collection.find().toArray();
+  return datos;
+};
 
 router.post('/insertar', function(req, res, next) {
   insertDatos(req.body);
-  res.status(200);
+  res.redirect('/');
 });
 
 
@@ -21,7 +37,8 @@ async function insertDatos(datos) {
   const collection = db.collection('alumnos');
   await collection.insertOne({
     nombre:datos.nombre,
-    edad:datos.edad
+    edad:datos.edad,
+    email:datos.email
   });
 
 }
